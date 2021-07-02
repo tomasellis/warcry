@@ -1,0 +1,41 @@
+{
+  "name": "warcry",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev-client": "cd src/client && next dev",
+    "build-client": "cd src/client && next build",
+    "start-client": "cd src/client && next start",
+    "start-server": "ts-node-dev --respawn --transpile-only --project tsconfig.server.json ./src/server/src/index.ts ",
+    "loadtest-server": "colyseus-loadtest src/server/loadtest/example.ts --room my_room --numClients 2",
+    "build-server": "npm run clean && tsc && node node_modules/copyfiles/copyfiles package.json ./lib && node node_modules/copyfiles/copyfiles arena.env ./lib",
+    "clean-server": "node node_modules/rimraf/bin lib"
+  },
+  "dependencies": {
+    "@colyseus/arena": "^0.14.9",
+    "@colyseus/monitor": "^0.14.0",
+    "@colyseus/social": "^0.10.9",
+    "@types/ws": "^7.4.5",
+    "colyseus": "^0.14.7",
+    "colyseus.js": "^0.14.1",
+    "cors": "^2.8.5",
+    "express": "^4.16.4",
+    "next": "11.0.1",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "ws": "^7.5.1"
+  },
+  "devDependencies": {
+    "@colyseus/loadtest": "^0.14.3",
+    "@types/cors": "^2.8.6",
+    "@types/express": "^4.17.1",
+    "@types/react": "17.0.11",
+    "copyfiles": "^2.4.1",
+    "rimraf": "^2.7.1",
+    "ts-node": "^8.1.0",
+    "ts-node-dev": "^1.0.0-pre.63",
+    "typescript": "4.3.4"
+  },
+  "author": "Tomas Ellis",
+  "license": "MIT"
+}
