@@ -15,6 +15,7 @@
     "@colyseus/arena": "^0.14.9",
     "@colyseus/monitor": "^0.14.0",
     "@colyseus/social": "^0.10.9",
+    "@types/three": "^0.129.1",
     "@types/ws": "^7.4.5",
     "colyseus": "^0.14.7",
     "colyseus.js": "^0.14.1",
@@ -23,6 +24,7 @@
     "next": "11.0.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",
+    "three": "^0.130.0",
     "ws": "^7.5.1"
   },
   "devDependencies": {

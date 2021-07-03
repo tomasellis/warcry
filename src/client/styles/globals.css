@@ -12,8 +12,6 @@ body {
     align-items: center;
 }
 
-canvas {
-    width: 800px;
-    height: 500px;
+#gamedisplay {
     border: 4px solid black;
 }

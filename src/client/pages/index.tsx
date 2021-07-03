@@ -1,7 +1,12 @@
 import Head from 'next/head'
-import MainGame from '../components/WarCryGame'
+import dynamic from 'next/dynamic'
 
 export default function Home() {
+    const DynamicComponentWithNoSSR = dynamic(
+        () => import('../components/WarCryDisplay'),
+        { ssr: false }
+    )
+
     return (
         <div>
             <Head>
@@ -11,7 +16,7 @@ export default function Home() {
             </Head>
             <main>
                 <h1>Welcome to War Cry!</h1>
-                <MainGame />
+                <DynamicComponentWithNoSSR />
             </main>
         </div>
     )
