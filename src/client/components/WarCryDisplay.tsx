@@ -5,96 +5,84 @@ let room: Colyseus.Room
 let client: Colyseus.Client
 let gameDisplay: HTMLCanvasElement = null
 
-type Prop<T> = {
-    [P: string]: T
-}
-
-type Position = {
+interface Player {
     x: number
     y: number
-}
-interface Player {
-    id: string
-    position: Position
     color: string
 }
 
 type ClientState = {
     inRoom: boolean
-    players?: Prop<Player>
-    client_id: string | null
+    players?: Map<string, Player>
+    clientId?: string
+    intervalId: NodeJS.Timeout | null
 }
 
 export default function MainGame() {
     client = new Colyseus.Client('ws://localhost:2567')
-    const [clientState, changeClientState] = useState<ClientState>({
+
+    const [clientState, setClientState] = useState<ClientState>({
         inRoom: false,
-        client_id: null,
-        players: {
-            asdasd: {
-                color: 'blue',
-                id: 'asdasd',
-                position: { x: 10, y: 10 },
-            },
-        },
+        clientId: null,
+        players: new Map(),
+        intervalId: null,
     })
 
     useEffect(() => {
-        if (clientState.inRoom === true) {
+        if (room !== undefined && clientState.inRoom === true) {
             gameDisplay = document.getElementById(
-                'gamedisplay'
+                'gameDisplay'
             ) as HTMLCanvasElement
             let ctx = gameDisplay.getContext('2d')
-            // ctx.clearRect(0, 0, 800, 800)
+            ctx.clearRect(0, 0, 800, 800)
 
-            Object.keys(clientState.players).forEach((player) => {
-                console.log(player, clientState.players[player])
-                let playerAvatar = clientState.players[player]
-                ctx.fillStyle = playerAvatar.color
-                ctx.fillRect(
-                    playerAvatar.position.x,
-                    playerAvatar.position.y,
-                    10,
-                    10
-                )
-            })
-
-            //document.addEventListener('keydown', logKey)
             document.addEventListener('keydown', (e) => {
-                changeClientState({
-                    ...clientState,
-                    players: {
-                        asdasd: {
-                            id: 'asdasd',
-                            color: 'blue',
-                            position: {
-                                x:
-                                    clientState.players['asdasd'].position.x +
-                                    20,
-                                y:
-                                    clientState.players['asdasd'].position.y +
-                                    20,
-                            },
-                        },
-                    },
-                })
-                ctx.fillStyle = clientState.players['asdasd'].color
-                ctx.fillRect(
-                    clientState.players['asdasd'].position.x + 20,
-                    clientState.players['asdasd'].position.y + 20,
-                    10,
-                    10
-                )
+                room.send('playerInput', e.code)
             })
+
+            room.onMessage('newPlayer', (msg) => {
+                console.log('newPlayer', msg)
+            })
+        } else {
+            setClientState({ ...clientState, inRoom: false, clientId: '' })
         }
-    }, [clientState.inRoom, clientState.players['asdasd'].position])
+    }, [clientState.inRoom])
+
+    const drawPlayers = () => {
+        clientState.players.forEach((value, key) => {
+            console.log(key, value)
+        })
+    }
 
     if (clientState.inRoom === true) {
+        if (clientState.intervalId === null) {
+            const id = setInterval(drawPlayers, 2000)
+            setClientState({ ...clientState, intervalId: id })
+        }
         return (
             <div>
                 <div style={{ border: '1px solid black' }}>
-                    <canvas id="gamedisplay"></canvas>
+                    <canvas id="gameDisplay"></canvas>
                 </div>
+                <button
+                    onClick={async () => {
+                        try {
+                            clearInterval(clientState.intervalId)
+                            setClientState({
+                                ...clientState,
+                                inRoom: false,
+                                clientId: null,
+                                intervalId: null,
+                            })
+                            room.leave()
+                            console.log('left successfully', room)
+                        } catch (e) {
+                            console.error('LEAVE ERROR:', e)
+                        }
+                    }}
+                >
+                    Leave room
+                </button>
             </div>
         )
     } else {
@@ -106,10 +94,11 @@ export default function MainGame() {
                             room = await client.joinOrCreate('MyRoom', {
                                 /* options */
                             })
-                            changeClientState({
+                            const sessionId = room.sessionId
+                            setClientState({
                                 ...clientState,
                                 inRoom: true,
-                                client_id: room.sessionId,
+                                clientId: sessionId,
                             })
                         } catch (e) {
                             console.error('JOIN ERROR:', e)
@@ -117,23 +106,6 @@ export default function MainGame() {
                     }}
                 >
                     Join room
-                </button>
-                <button
-                    onClick={async () => {
-                        try {
-                            changeClientState({
-                                ...clientState,
-                                inRoom: false,
-                                client_id: null,
-                            })
-                            room.leave()
-                            console.log('left successfully', room)
-                        } catch (e) {
-                            console.error('LEAVE ERROR:', e)
-                        }
-                    }}
-                >
-                    Leave room
                 </button>
             </div>
         )
