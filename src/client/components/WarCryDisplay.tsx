@@ -40,8 +40,8 @@ export default function MainGame() {
                 room.send('playerInput', e.code)
             })
 
-            room.onMessage('newPlayer', (msg) => {
-                console.log('newPlayer', msg)
+            room.onMessage('devInfo', (msg) => {
+                console.log('devInfo', msg)
             })
         } else {
             setClientState({ ...clientState, inRoom: false, clientId: '' })
@@ -91,7 +91,7 @@ export default function MainGame() {
                 <button
                     onClick={async () => {
                         try {
-                            room = await client.joinOrCreate('MyRoom', {
+                            room = await client.joinOrCreate('WarCryGame', {
                                 /* options */
                             })
                             const sessionId = room.sessionId

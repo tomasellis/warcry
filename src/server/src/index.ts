@@ -1,6 +1,6 @@
 import { Server } from "colyseus";
 import { monitor } from "@colyseus/monitor";
-import { MyRoom } from "./rooms/MyRoom";
+import { WarCryGame } from "./rooms/WarCryGame";
 /* Fix this imports */
 const cors = require("cors");
 const http = require("http");
@@ -18,7 +18,7 @@ const gameServer = new Server({
 });
 
 // register your room handlers
-gameServer.define("MyRoom", MyRoom);
+gameServer.define("WarCryGame", WarCryGame);
 
 // register colyseus monitor AFTER registering your room handlers
 app.use("/colyseus", monitor());
