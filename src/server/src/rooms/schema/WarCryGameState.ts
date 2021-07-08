@@ -2,7 +2,7 @@ import { MapSchema, Schema, type } from "@colyseus/schema";
 import { Board } from "./Board";
 import { Player } from "./Player";
 export class WarCryGameState extends Schema {
-  @type([Board])
+  @type(Board)
   board: Board;
 
   @type({ map: Player })
