@@ -2,10 +2,13 @@ import Head from 'next/head'
 import dynamic from 'next/dynamic'
 
 export default function Home() {
-    const DynamicComponentWithNoSSR = dynamic(
-        () => import('../components/WarCryDisplay'),
-        { ssr: false }
-    )
+    const NoSSRWarCry = dynamic(() => import('../components/WarCryDisplay'), {
+        ssr: false,
+    })
+
+    const NoSSRTetris = dynamic(() => import('../components/TetrisDisplay'), {
+        ssr: false,
+    })
 
     return (
         <div>
@@ -16,7 +19,8 @@ export default function Home() {
             </Head>
             <main>
                 <h1>Welcome to War Cry!</h1>
-                <DynamicComponentWithNoSSR />
+                <NoSSRWarCry />
+                <NoSSRTetris />
             </main>
         </div>
     )

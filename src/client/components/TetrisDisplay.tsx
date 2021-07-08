@@ -1,11 +1,10 @@
 import * as Colyseus from 'colyseus.js'
 import { ReactNode, useEffect, useState } from 'react'
-import { WarCryGameState } from '../../server/src/rooms/schema/WarCryGameState'
-
+import { TetrisGameState } from '../../server/src/rooms/schema/TetrisGameState'
 import { Player } from '../../server/src/rooms/schema/Player'
 import { Board } from '../../server/src/rooms/schema/Board'
 
-let room: Colyseus.Room<WarCryGameState>
+let room: Colyseus.Room<TetrisGameState>
 let gameDisplay: HTMLCanvasElement = null
 
 type ClientState = {
@@ -15,57 +14,19 @@ type ClientState = {
     intervalId: NodeJS.Timeout | null
     boardRows: number | null
     boardCols: number | null
-    boardColors: string[] | null
-    boardSquares: JSX.Element[] | null
+    boardValues: number[] | null
 }
 
-export default function MainGame() {
+export default function Tetris() {
     const client = new Colyseus.Client('ws://localhost:2567')
-
     const [clientState, setClientState] = useState<ClientState>({
-        inRoom: false,
-        clientId: null,
-        players: new Map(),
-        intervalId: null,
-        boardRows: null,
-        boardColors: null,
         boardCols: null,
-        boardSquares: null,
+        boardRows: null,
+        boardValues: null,
+        inRoom: false,
+        intervalId: null,
     })
-
-    useEffect(() => {
-        if (room !== undefined && clientState.inRoom === true) {
-            drawGrid(clientState.boardColors)
-            /* gameDisplay = document.getElementById(
-                'gameDisplay'
-            ) as HTMLCanvasElement
-            gameDisplay.height = 500
-            gameDisplay.width = 700
-            let ctx = gameDisplay.getContext('2d')
-            ctx.clearRect(0, 0, 800, 800)
-            */
-            document.addEventListener('keydown', (e) => {
-                room.send('playerInput', e.code)
-            })
-
-            room.onMessage('devInfo', (msg) => {
-                console.log('devInfo', msg)
-            })
-
-            room.onStateChange((newState) => {
-                console.log(newState)
-                setClientState({
-                    ...clientState,
-                    players: newState.players,
-                    boardColors: newState.board.colors,
-                    boardCols: newState.board.cols,
-                    boardRows: newState.board.rows,
-                })
-            })
-        } else {
-            setClientState({ ...clientState, inRoom: false, clientId: '' })
-        }
-    }, [clientState.inRoom])
+    const gameLoop = () => {}
 
     const drawPlayers = () => {
         clientState.players.forEach((value, key) => {
@@ -73,37 +34,17 @@ export default function MainGame() {
         })
     }
 
-    const drawGrid = (colors: string[]) => {
-        console.log('colors', colors)
-        let squareColors = colors
-        let updatedColors = squareColors.map((el, index) => (
-            <div
-                className="gridSquare"
-                style={{ backgroundColor: `${el}` }}
-                key={index}
-            ></div>
-        ))
-        setClientState({ ...clientState, boardSquares: updatedColors })
-    }
-
-    const randomColor = () => Math.floor(Math.random() * 16777215).toString(16)
-
-    const printPlayersName = (players: Map<string, Player>) => {
-        let names = []
-        for (let key of players.keys()) {
-            names.push(key)
-            console.log(randomColor())
-        }
-        return names.map((name, index) => (
-            <div style={{ color: `#${randomColor()}` }} key={index}>
-                Player {1 + index + ': ' + name}
-            </div>
+    const drawGrid = (clientState: ClientState) => {
+        console.info('board aint null')
+        let squares = clientState.boardValues
+        return squares.map((el, index) => (
+            <div className="gridSquare" key={index}></div>
         ))
     }
 
     if (clientState.inRoom === true) {
         if (clientState.intervalId === null) {
-            const id = setInterval(drawPlayers, 2000)
+            const id = setInterval(gameLoop, 2000)
             setClientState({ ...clientState, intervalId: id })
         }
         return (
@@ -113,7 +54,7 @@ export default function MainGame() {
                 ) : (
                     <span>F</span>
                 )}
-                <div className="grid">{clientState.boardSquares}</div>
+                <div className="grid">{drawGrid(clientState)}</div>
                 <button
                     onClick={async () => {
                         try {
@@ -141,7 +82,7 @@ export default function MainGame() {
                 <button
                     onClick={async () => {
                         try {
-                            room = await client.joinOrCreate('WarCryGame', {
+                            room = await client.joinOrCreate('TetrisGame', {
                                 /* options */
                             })
                             const sessionId = room.sessionId
@@ -155,9 +96,26 @@ export default function MainGame() {
                         }
                     }}
                 >
-                    Join room
+                    Join Tetris Room
                 </button>
             </div>
         )
     }
+}
+
+/* ---------------------HELPERS-------------------------------- */
+
+const randomColor = () => Math.floor(Math.random() * 16777215).toString(16)
+
+const printPlayersName = (players: Map<string, Player>) => {
+    let names = []
+    for (let key of players.keys()) {
+        names.push(key)
+        console.log(randomColor())
+    }
+    return names.map((name, index) => (
+        <div style={{ color: `#${randomColor()}` }} key={index}>
+            Player {1 + index + ': ' + name}
+        </div>
+    ))
 }
