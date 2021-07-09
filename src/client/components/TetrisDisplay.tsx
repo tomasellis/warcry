@@ -34,7 +34,6 @@ export default function TetrisGame() {
                 setClientState({
                     ...clientState,
                     boardCols: newState.board.cols,
-                    players: newState.players,
                     boardRows: newState.board.rows,
                     boardValues: newState.board.values,
                 })
@@ -56,6 +55,8 @@ export default function TetrisGame() {
             <div className="gridSquare" key={index}></div>
         ))
     }
+
+    const drawBoard = (board: Board): void => {}
 
     if (clientState.inRoom === true) {
         if (clientState.intervalId === null) {
