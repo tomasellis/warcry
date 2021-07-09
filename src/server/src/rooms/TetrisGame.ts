@@ -1,15 +1,15 @@
 import { Room, Client } from "colyseus";
-import { Player } from "./schema/Player";
+import { TetrisPlayer } from "./schema/Tetris/TetrisPlayer";
 import { TetrisGameState } from "./schema/TetrisGameState";
 
 export class TetrisGame extends Room<TetrisGameState> {
   onCreate(options: any) {
-    this.setState(new TetrisGameState());
+    this.setState(new TetrisGameState(20, 8));
     this.broadcast("devInfo", this.state);
   }
 
   onJoin(client: Client, options: any) {
-    this.state.players.set(client.sessionId, new Player());
+    this.state.players.set(client.sessionId, new TetrisPlayer());
     this.broadcast("devInfo", this.state);
     console.log(client.sessionId, "joined!");
   }

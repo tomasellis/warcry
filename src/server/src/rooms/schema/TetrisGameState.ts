@@ -1,16 +1,17 @@
 import { MapSchema, Schema, type } from "@colyseus/schema";
-import { Board } from "./Board";
-import { Player } from "./Player";
+import { TetrisPlayer } from "./Tetris/TetrisPlayer";
+import { TetrisBoard } from "./Tetris/TetrisBoard";
+
 export class TetrisGameState extends Schema {
-  @type(Board)
-  board: Board;
+  @type(TetrisBoard)
+  board: TetrisBoard;
 
-  @type({ map: Player })
-  players: MapSchema<Player>;
+  @type({ map: TetrisPlayer })
+  players: MapSchema<TetrisPlayer>;
 
-  constructor(rows: number = 20, cols: number = 30) {
+  constructor(rows: number = 20, cols: number = 8) {
     super();
-    this.players = new MapSchema<Player>();
-    this.board = new Board(rows, cols);
+    this.players = new MapSchema<TetrisPlayer>();
+    this.board = new TetrisBoard(rows, cols);
   }
 }
