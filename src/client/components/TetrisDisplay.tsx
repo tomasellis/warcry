@@ -6,7 +6,12 @@ import { TetrisPlayer } from '../../server/src/rooms/schema/Tetris/TetrisPlayer'
 import { TetrisBoard } from '../../server/src/rooms/schema/Tetris/TetrisBoard'
 
 let room: Colyseus.Room<TetrisGameState>
-let gameDisplay: HTMLCanvasElement = null
+let client: Colyseus.Client
+
+type JoinMessage = {
+    board: TetrisBoard
+    client: string
+}
 
 type ClientState = {
     inRoom: boolean
@@ -19,7 +24,7 @@ type ClientState = {
 }
 
 export default function TetrisGame() {
-    const client = new Colyseus.Client('ws://localhost:2567')
+    /* INITIAL CLIENT STATE */
     const [clientState, setClientState] = useState<ClientState>({
         boardCols: null,
         boardRows: null,
@@ -28,23 +33,23 @@ export default function TetrisGame() {
         intervalId: null,
     })
 
-    /* --------------------------- GAMELOOP --------------------------- */
-    room.onStateChange((newState) => {
+    useEffect(() => {
+        /* Get the Colyseus client */
+        firstJoin()
+    }, [])
+    const firstJoin = async () => {
+        /* Get the Colyseus client */
+        client = new Colyseus.Client(
+            process.env.TETROLYSEUS_SERVER || 'ws://localhost:2567'
+        )
+        room = await client.joinOrCreate('TetrisGame')
+        const sessionId = room.sessionId
         setClientState({
             ...clientState,
-            boardCols: newState.board.cols,
-            boardRows: newState.board.rows,
-            boardValues: newState.board.values,
+            inRoom: true,
+            clientId: sessionId,
         })
-    })
-
-    useEffect(() => {
-        drawBoard(
-            clientState.boardRows,
-            clientState.boardCols,
-            clientState.boardValues
-        )
-    }, [clientState])
+    }
 
     const drawBoard = (
         boardRows: number,
@@ -59,6 +64,7 @@ export default function TetrisGame() {
 
         //Set block height??
         const blockHeight = Math.floor((boardRec.height - 32) / boardRows)
+        console.log('ブロク　ハイト', blockHeight)
 
         //Set columns and rows using CSS Grid
         boardEl.style.gridTemplateColumns = `repeat(${boardCols}, ${blockHeight}px)`
@@ -91,65 +97,83 @@ export default function TetrisGame() {
                     boardSquareValues,
                     boardCols
                 ).toString(16)}`
+                // Cell size
+                // cellDiv.style.width = `20px`
+                // cellDiv.style.height = `20px`
+                cellDiv.style.border = `1px solid black`
                 //Attach to board
                 boardEl.append(cellDiv)
             }
         }
     }
 
+    const drawFallingBlock = () => {}
+
+    // --------------------------- GAMELOOP　ツ---------------------------
+    // ---------------------------*************--------------------------
+
     if (clientState.inRoom === true) {
-        return (
-            <div id="gameDisplay">
-                {clientState.players !== undefined ? (
-                    printPlayersName(clientState.players)
-                ) : (
-                    <span>NoPlayerPrinting</span>
-                )}
-                <div id="gameBoard"></div>
-                <button
-                    onClick={async () => {
-                        try {
-                            clearInterval(clientState.intervalId)
-                            setClientState({
-                                ...clientState,
-                                inRoom: false,
-                                clientId: null,
-                                intervalId: null,
-                            })
-                            room.leave()
-                            console.log('left successfully', room)
-                        } catch (e) {
-                            console.error('LEAVE ERROR:', e)
-                        }
-                    }}
-                >
-                    Leave room
-                </button>
-            </div>
-        )
-    } else {
-        return (
-            <div>
-                <button
-                    onClick={async () => {
-                        try {
-                            room = await client.joinOrCreate('TetrisGame')
-                            const sessionId = room.sessionId
-                            setClientState({
-                                ...clientState,
-                                inRoom: true,
-                                clientId: sessionId,
-                            })
-                        } catch (e) {
-                            console.error('JOIN ERROR:', e)
-                        }
-                    }}
-                >
-                    Join Tetris Room
-                </button>
-            </div>
-        )
+        room.onMessage('join', (msg: JoinMessage) => {
+            if (room.sessionId === msg.client) {
+                setClientState({
+                    ...clientState,
+                    boardCols: msg.board.cols,
+                    boardRows: msg.board.rows,
+                    boardValues: msg.board.values,
+                })
+            }
+        })
+
+        // If we are in-game, please update the game
+        room.onStateChange((newState) => {
+            setClientState({
+                ...clientState,
+                boardValues: newState.board.values,
+            })
+        })
     }
+    // RENDER GAME ☜(ﾟヮﾟ☜)
+    useEffect(() => {
+        if (clientState.inRoom === true) {
+            drawBoard(
+                clientState.boardRows,
+                clientState.boardCols,
+                clientState.boardValues
+            )
+            drawFallingBlock()
+        } else {
+        }
+    }, [clientState])
+
+    return (
+        <div id="field">
+            {clientState.players !== undefined ? (
+                printPlayersName(clientState.players)
+            ) : (
+                <span>NoPlayerPrinting</span>
+            )}
+            <div id="gameBoard"></div>
+            <button
+                onClick={async () => {
+                    try {
+                        clearInterval(clientState.intervalId)
+                        setClientState({
+                            ...clientState,
+                            inRoom: false,
+                            clientId: null,
+                            intervalId: null,
+                        })
+                        room.leave()
+                        console.log('left successfully', room)
+                    } catch (e) {
+                        console.error('LEAVE ERROR:', e)
+                    }
+                }}
+            >
+                Leave room
+            </button>
+        </div>
+    )
 }
 
 /* ---------------------HELPERS-------------------------------- */

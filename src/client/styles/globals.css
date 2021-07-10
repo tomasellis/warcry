@@ -29,3 +29,15 @@ body {
     height: 20px;
     outline: 1px solid;
 }
+
+#gameBoard {
+    display: grid;
+    height: 85%;
+    width: 25%;
+}
+
+#field {
+    display: flex;
+    justify-content: center;
+    height: 100%;
+}

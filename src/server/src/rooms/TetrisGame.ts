@@ -1,6 +1,12 @@
 import { Room, Client } from "colyseus";
+import { TetrisBoard } from "./schema/Tetris/TetrisBoard";
 import { TetrisPlayer } from "./schema/Tetris/TetrisPlayer";
 import { TetrisGameState } from "./schema/TetrisGameState";
+
+type JoinMessage = {
+  board: TetrisBoard;
+  client: string;
+};
 
 export class TetrisGame extends Room<TetrisGameState> {
   onCreate(options: any) {
@@ -9,9 +15,12 @@ export class TetrisGame extends Room<TetrisGameState> {
   }
 
   onJoin(client: Client, options: any) {
-    //this.state.players.set(client.sessionId, new TetrisPlayer());
-    this.broadcast("devInfo", this.state);
     console.log(client.sessionId, "joined!");
+    const joinMessage: JoinMessage = {
+      board: this.state.board,
+      client: client.sessionId,
+    };
+    this.broadcast("join", joinMessage);
   }
 
   onLeave(client: Client, consented: boolean) {
