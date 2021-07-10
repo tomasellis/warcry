@@ -3,6 +3,7 @@ import { ReactNode, useEffect, useState } from 'react'
 import { TetrisGameState } from '../../server/src/rooms/schema/TetrisGameState'
 import { Board } from '../../server/src/rooms/schema/Board'
 import { TetrisPlayer } from '../../server/src/rooms/schema/Tetris/TetrisPlayer'
+import { TetrisBoard } from '../../server/src/rooms/schema/Tetris/TetrisBoard'
 
 let room: Colyseus.Room<TetrisGameState>
 let gameDisplay: HTMLCanvasElement = null
@@ -27,56 +28,84 @@ export default function TetrisGame() {
         intervalId: null,
     })
 
+    /* --------------------------- GAMELOOP --------------------------- */
+    room.onStateChange((newState) => {
+        setClientState({
+            ...clientState,
+            boardCols: newState.board.cols,
+            boardRows: newState.board.rows,
+            boardValues: newState.board.values,
+        })
+    })
+
     useEffect(() => {
-        if (clientState.inRoom === true) {
-            room.onMessage('devInfo', (msg) => console.info(msg))
-            room.onStateChange((newState) => {
-                setClientState({
-                    ...clientState,
-                    boardCols: newState.board.cols,
-                    boardRows: newState.board.rows,
-                    boardValues: newState.board.values,
-                })
-            })
-        }
+        drawBoard(
+            clientState.boardRows,
+            clientState.boardCols,
+            clientState.boardValues
+        )
     }, [clientState])
 
-    const gameLoop = () => {}
+    const drawBoard = (
+        boardRows: number,
+        boardCols: number,
+        boardSquareValues: number[]
+    ): void => {
+        //Get DOM board
+        const boardEl = document.getElementById('gameBoard')
 
-    const drawPlayers = () => {
-        clientState.players.forEach((value, key) => {
-            console.log(key, value)
-        })
+        //And its size/bounding box
+        const boardRec = boardEl.getBoundingClientRect()
+
+        //Set block height??
+        const blockHeight = Math.floor((boardRec.height - 32) / boardRows)
+
+        //Set columns and rows using CSS Grid
+        boardEl.style.gridTemplateColumns = `repeat(${boardCols}, ${blockHeight}px)`
+        boardEl.style.gridTemplateRows = `repeat(${boardRows}, ${blockHeight}px)`
+
+        //Bare minimum size
+        boardEl.style.height = 'fit-content'
+        boardEl.style.width = 'fit-content'
+
+        //Get each square value for setting up colors
+        const getMeSomeColor = (
+            whichRow: number,
+            whichCol: number,
+            whichValues: number[],
+            maxColumns: number
+        ): number => {
+            return whichValues[whichRow * maxColumns + whichCol] // Divide the array in groups of MaxColumns, the iterate over them
+        }
+        //Paint board
+        for (let row = 0; row < boardRows; ++row) {
+            for (let col = 0; col < boardCols; ++col) {
+                //Create a square
+                const cellDiv = document.createElement('div')
+                //Attach to grid
+                cellDiv.id = `cell-r${row}-c${col}`
+                //Paint it
+                cellDiv.style.background = `#${getMeSomeColor(
+                    row,
+                    col,
+                    boardSquareValues,
+                    boardCols
+                ).toString(16)}`
+                //Attach to board
+                boardEl.append(cellDiv)
+            }
+        }
     }
-
-    const drawGrid = (boardValues: number[]) => {
-        console.info('board aint null')
-        return boardValues.map((el, index) => (
-            <div className="gridSquare" key={index}></div>
-        ))
-    }
-
-    const drawBoard = (board: Board): void => {}
 
     if (clientState.inRoom === true) {
-        if (clientState.intervalId === null) {
-            const id = setInterval(gameLoop, 2000)
-            setClientState({ ...clientState, intervalId: id })
-        }
         return (
             <div id="gameDisplay">
                 {clientState.players !== undefined ? (
                     printPlayersName(clientState.players)
                 ) : (
-                    <span>F</span>
+                    <span>NoPlayerPrinting</span>
                 )}
-                <div className="grid">
-                    {clientState.boardValues !== null ? (
-                        drawGrid(clientState.boardValues)
-                    ) : (
-                        <span>f</span>
-                    )}
-                </div>
+                <div id="gameBoard"></div>
                 <button
                     onClick={async () => {
                         try {
